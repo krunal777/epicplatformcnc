@@ -1,0 +1,14 @@
+FROM ghcr.io/futureecom/php-app-cli:prod-3.3.4 as intermediate
+
+ARG COMPOSER_AUTH_ARG
+ENV COMPOSER_AUTH $COMPOSER_AUTH_ARG
+ENV COMPOSER_ALLOW_SUPERUSER 1
+
+COPY . /var/www/html
+RUN composer install
+
+FROM ghcr.io/futureecom/php-app-cli:prod-3.3.4
+
+COPY --from=intermediate /var/www/html /var/www/html
+COPY futureecom-jobs-supervisord.conf /etc/supervisor/conf.d/
+

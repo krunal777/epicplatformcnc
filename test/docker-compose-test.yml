@@ -1,0 +1,97 @@
+version: '3.7'
+services:
+
+  # The Application
+  app:
+    image: ghcr.io/futureecom/api:latest
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - backend
+      - frontend
+    ports:
+      - 8080:8080
+    command: "sh ./test/startup-test.sh"
+    environment:
+      - APP_NAME=test-app
+      - APP_ENV=prod
+      - APP_DEBUG=false
+      - VIRTUAL_HOST=futureecom.platform
+      - DB_CONNECTION=mongodb
+      - MONGO_HOST=mongo 
+      - MONGO_USERNAME=mongodb 
+      - MONGO_PASSWORD=qweqwe
+      - REDIS_VERIFYPEER=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_CACHE_HOST=redis
+      - REDIS_CACHE_PORT=6379
+      - REDIS_CACHE_DB=0
+      - PHP_FPM_PM=dynamic
+      - PHP_FPM_MAX_CHILDREN=40
+      - PHP_FPM_START_SERVERS=8
+      - PHP_FPM_MIN_SPARE_SERVERS=4
+      - PHP_FPM_MAX_SPARE_SERVERS=8
+      - PHP_FPM_MAX_REQUESTS=200
+      - PHP_FPM_IDLE_TIMEOUT=10s
+      - STREAMER_OPTIONS=--consumer=app1 --group=test
+      - WEBHOOK_OPTIONS=--consumer=webhook --group=test_webhook --keep-alive
+      - STREAMER_RETRY_OPTIONS=--purge
+      - STREAM_CLEANUP_MODE=purge
+      - STREAM_CLEANUP_LIST=user.created,user.deleted,user.updated,client.created,client.deleted,client.updated,role.created,role.deleted,role.updated,permission.created,permission.deleted,permission.updated,shipping.created,shipping.updated,shipping.deleted,shipping.vat.updated,cart.created,cart.deleted,cart.updated,cart.item.created,cart.item.deleted,cart.item.updated,cart.shipping.created,cart.shipping.updated,order.placed,product.created,product.updated,product.deleted,taxonomy.created,taxonomy.updated,taxonomy.deleted,product.vat.updated,product.vat.modified,product.inventory.updated,product.inventory.created,customer.created,customer.updated,customer.deleted,order.created,order.updated,order.shipment.created,order.shipment.updated,credit.memo.created,invoice.created,receipt.created,payment.method.created,payment.method.updated,payment.method.deleted,promotion.created,promotion.updated,promotion.deleted,vat.created,vat.updated,vat.deleted,vat.modified,vat.removed,tax.group.created,tax.group.updated,tax.group.deleted,tax.rate.created,tax.rate.updated,tax.rate.deleted,zone.created,zone.updated,zone.deleted,order.deleted,payment.processed,notify.with.refund,item.restock,order.transaction.created,store.deleted,store.created,netlify.site.created,store.clients.created
+      - 'STREAM_CLEANUP_AGE=3 days'
+      - CACHE_DRIVER=redis
+      - APP_KEY=base64:xiBkR2W5zwDaZfg3J8WtyBTPgNP992cjaQGu06x21qc=
+      - AUTH_PRIVATE_KEY=${AUTH_PRIVATE_KEY:?err}
+      - AUTH_PUBLIC_KEY=${AUTH_PUBLIC_KEY:?err}
+      - BRANCH=${BRANCH:-master}
+      - COMPOSER_AUTH=${COMPOSER_AUTH:?err}
+    
+
+  # The Database
+  mongo:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    networks:
+      - backend
+    environment:
+      # provide your credentials here
+      - MONGO_INITDB_ROOT_USERNAME=mongodb
+      - MONGO_INITDB_ROOT_PASSWORD=qweqwe
+
+  # Redis
+  redis:
+    image: redis:5.0.2-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  # Websocket
+  websocket:
+    image: futureecom/websocket:1.1.0
+    depends_on:
+      - redis
+    ports:
+      - 8001:8080
+    networks:
+      - backend
+      - frontend
+    environment:
+      - AUTH_PUBLIC_KEY=${AUTH_PUBLIC_KEY:?err}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TLS=false
+      - ALLOWED_ORIGINS="*"
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+      name: discovery
+
+

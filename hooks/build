@@ -1,0 +1,4 @@
+#!/bin/bash
+
+docker build -t $IMAGE_NAME --build-arg COMPOSER_AUTH_ARG="$COMPOSER_AUTH_ENV" .
+

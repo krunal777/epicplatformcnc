@@ -1,0 +1,5 @@
+.git*
+.editorconfig
+tests
+.dockerignore
+phpunit*
